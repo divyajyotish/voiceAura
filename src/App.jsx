@@ -107,29 +107,29 @@ export default function App() {
   return (
     <div className="app">
       <div className="container">
-        <div className="badge">AI Powered Voice Intelligence</div>
+        <div className="badge">Real-Time Voice Analysis</div>
 
         <h1 className="title">VoiceAura</h1>
 
         <p className="subtitle">
-          Unlock your hidden personality, emotional power, confidence, and
-          voice energy in just 30 seconds.
+          Get real, measured insights into your voice — confidence, energy,
+          pitch, and speaking patterns — from a 30-second recording.
         </p>
 
         <div className="stats">
           <div className="stat-card">
-            <h2 className="stat-number">50K+</h2>
-            <p className="stat-label">Reports Generated</p>
+            <h2 className="stat-number">30s</h2>
+            <p className="stat-label">Quick Voice Scan</p>
           </div>
 
           <div className="stat-card">
-            <h2 className="stat-number">92%</h2>
-            <p className="stat-label">Accuracy Score</p>
+            <h2 className="stat-number">0</h2>
+            <p className="stat-label">Audio Stored or Uploaded</p>
           </div>
 
           <div className="stat-card">
-            <h2 className="stat-number">4.9★</h2>
-            <p className="stat-label">User Rating</p>
+            <h2 className="stat-number">7+</h2>
+            <p className="stat-label">Real Acoustic Metrics</p>
           </div>
         </div>
 

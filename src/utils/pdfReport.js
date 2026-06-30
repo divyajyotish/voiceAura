@@ -38,7 +38,7 @@ export function downloadVoiceAuraPDF(report) {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10.5);
-  doc.text("AI Powered Voice Intelligence Report", margin, 28);
+  doc.text("Real-Time Voice Analysis Report", margin, 28);
 
   const reportId = generateReportId();
   const dateStr = new Date().toLocaleDateString("en-IN", {
