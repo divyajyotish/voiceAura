@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./styles.css";
 import { requestMicrophoneAccess, analyzeStream } from "./utils/audioAnalysis";
 import { downloadVoiceAuraPDF } from "./utils/pdfReport";
+import { startPayment } from "./utils/payment";
 
 export default function App() {
   const [requesting, setRequesting] = useState(false);
@@ -9,6 +10,9 @@ export default function App() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
+  const [unlocked, setUnlocked] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
 
   // Step 1: ask for mic permission and WAIT for it. Only once it's
   // actually granted do we switch into the "recording" UI - this is the
@@ -16,6 +20,8 @@ export default function App() {
   const startRecording = async () => {
     setError(null);
     setReport(null);
+    setUnlocked(false);
+    setPaymentError(null);
     setRequesting(true);
 
     try {
@@ -43,6 +49,21 @@ export default function App() {
   // proper branding/sections), not a screenshot of the on-screen card
   const downloadPDF = () => {
     downloadVoiceAuraPDF(report);
+  };
+
+  const handleUnlock = () => {
+    setPaymentError(null);
+    setPaying(true);
+    startPayment({
+      onSuccess: () => {
+        setPaying(false);
+        setUnlocked(true);
+      },
+      onFailure: (message) => {
+        setPaying(false);
+        if (message) setPaymentError(message);
+      },
+    });
   };
 
   return (
@@ -111,36 +132,123 @@ export default function App() {
               Voice Energy: <span>{report.energyLevel}</span>
             </div>
 
-            <div className="report-item">
-              Vocal Tone: <span>{report.tone}</span>
-            </div>
+            {!unlocked && (
+              <div className="locked-section">
+                <div className="locked-blur">
+                  <div className="report-item">
+                    Vocal Tone: <span>██████████</span>
+                  </div>
+                  <div className="report-item">
+                    Pitch Profile: <span>██████████</span>
+                  </div>
+                  <div className="report-item">
+                    Pitch Steadiness: <span>██████████</span>
+                  </div>
+                  <div className="report-item">
+                    Pause Ratio: <span>██████████</span>
+                  </div>
+                  <div className="report-item">
+                    AI Recommendation: <span>████████████████████</span>
+                  </div>
+                  <div className="report-item">
+                    Personality Type: <span>██████████</span>
+                  </div>
+                  <div className="report-item">
+                    Career Match: <span>██████████</span>
+                  </div>
+                </div>
 
-            <div className="report-item">
-              Pitch Profile: <span>{report.pitchProfile}</span>
-            </div>
+                <div className="unlock-box">
+                  <p className="unlock-title">🔒 Unlock Your Full Report</p>
+                  <p className="unlock-subtitle">
+                    Get 13 detailed insights including AI Recommendation,
+                    Personality Type, Career Match &amp; more — plus a
+                    downloadable PDF.
+                  </p>
+                  <button
+                    className="unlock-btn"
+                    onClick={handleUnlock}
+                    disabled={paying}
+                  >
+                    {paying ? "Opening secure payment…" : "Unlock Full Report — ₹29"}
+                  </button>
+                  {paymentError && (
+                    <p className="payment-error">{paymentError}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
-            <div className="report-item">
-              Average Pitch:{" "}
-              <span>
-                {report.avgPitch > 0 ? `${report.avgPitch} Hz` : "Not Detected"}
-              </span>
-            </div>
+            {unlocked && (
+              <>
+                <div className="report-item">
+                  Vocal Tone: <span>{report.tone}</span>
+                </div>
 
-            <div className="report-item">
-              Pitch Steadiness: <span>{report.steadiness}</span>
-            </div>
+                <div className="report-item">
+                  Pitch Profile: <span>{report.pitchProfile}</span>
+                </div>
 
-            <div className="report-item">
-              Pause Ratio: <span>{report.pauseRatio}%</span>
-            </div>
+                <div className="report-item">
+                  Average Pitch:{" "}
+                  <span>
+                    {report.avgPitch > 0 ? `${report.avgPitch} Hz` : "Not Detected"}
+                  </span>
+                </div>
 
-            <div className="report-item">
-              AI Recommendation: <span>{report.recommendation}</span>
-            </div>
+                <div className="report-item">
+                  Pitch Steadiness: <span>{report.steadiness}</span>
+                </div>
 
-            <button className="download-btn" onClick={downloadPDF}>
-              Download Professional Report (PDF)
-            </button>
+                <div className="report-item">
+                  Pause Ratio: <span>{report.pauseRatio}%</span>
+                </div>
+
+                <div className="report-item">
+                  AI Recommendation: <span>{report.recommendation}</span>
+                </div>
+
+                <p className="report-disclaimer fun-insights-divider">
+                  Fun Insights — for entertainment &amp; self-reflection
+                </p>
+
+                <div className="report-item">
+                  Estimated Voice Age: <span>{report.estimatedVoiceAge}</span>
+                </div>
+
+                <div className="report-item">
+                  Personality Type: <span>{report.personalityType}</span>
+                </div>
+
+                <div className="report-item">
+                  Leadership Aura: <span>{report.leadershipAura}</span>
+                </div>
+
+                <div className="report-item">
+                  Persuasion Power: <span>{report.persuasionPower}</span>
+                </div>
+
+                <div className="report-item">
+                  Stress Level: <span>{report.stressLevel}</span>
+                </div>
+
+                <div className="report-item">
+                  Relationship Style: <span>{report.relationshipStyle}</span>
+                </div>
+
+                <div className="report-item">
+                  Career Match: <span>{report.careerMatch}</span>
+                </div>
+
+                <div className="report-item">
+                  Insight: <span>{report.insight}</span>
+                </div>
+
+                <button className="download-btn" onClick={downloadPDF}>
+                  Download Professional Report (PDF)
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
