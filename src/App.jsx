@@ -13,6 +13,10 @@ export default function App() {
   const [unlocked, setUnlocked] = useState(false);
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recoveryId, setRecoveryId] = useState("");
+  const [recoveryChecking, setRecoveryChecking] = useState(false);
+  const [recoveryError, setRecoveryError] = useState(null);
 
   // Step 1: ask for mic permission and WAIT for it. Only once it's
   // actually granted do we switch into the "recording" UI - this is the
@@ -64,6 +68,40 @@ export default function App() {
         if (message) setPaymentError(message);
       },
     });
+  };
+
+  // Recovery path: if Razorpay's widget showed an error but money was
+  // actually deducted (a known checkout-widget glitch), the user can
+  // paste their Payment ID (visible in their bank/UPI app or Razorpay
+  // SMS/email) and we verify it directly against Razorpay's records.
+  const handleRecoveryCheck = async () => {
+    setRecoveryError(null);
+    if (!recoveryId.trim()) {
+      setRecoveryError("Please enter your Payment ID.");
+      return;
+    }
+    setRecoveryChecking(true);
+    try {
+      const res = await fetch("/.netlify/functions/check-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: recoveryId.trim() }),
+      });
+      const result = await res.json();
+      if (result.verified) {
+        setUnlocked(true);
+        setShowRecovery(false);
+      } else {
+        setRecoveryError(
+          "This Payment ID doesn't show as a successful payment yet. If money was deducted, please wait a few minutes and try again, or contact support."
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      setRecoveryError("Could not verify right now. Please try again.");
+    } finally {
+      setRecoveryChecking(false);
+    }
   };
 
   return (
@@ -174,6 +212,39 @@ export default function App() {
                   </button>
                   {paymentError && (
                     <p className="payment-error">{paymentError}</p>
+                  )}
+
+                  {!showRecovery ? (
+                    <button
+                      className="recovery-link"
+                      onClick={() => setShowRecovery(true)}
+                    >
+                      Already paid but report didn't unlock?
+                    </button>
+                  ) : (
+                    <div className="recovery-box">
+                      <p className="recovery-label">
+                        Enter your Payment ID (from your bank/UPI app or Razorpay
+                        message) to verify and unlock:
+                      </p>
+                      <input
+                        type="text"
+                        className="recovery-input"
+                        placeholder="e.g. pay_XXXXXXXXXXXXXX"
+                        value={recoveryId}
+                        onChange={(e) => setRecoveryId(e.target.value)}
+                      />
+                      <button
+                        className="recovery-btn"
+                        onClick={handleRecoveryCheck}
+                        disabled={recoveryChecking}
+                      >
+                        {recoveryChecking ? "Checking…" : "Verify Payment"}
+                      </button>
+                      {recoveryError && (
+                        <p className="payment-error">{recoveryError}</p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

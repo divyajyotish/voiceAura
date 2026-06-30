@@ -380,6 +380,72 @@ body {
   color: #ff9a9a;
 }
 
+.recovery-link {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.recovery-link:hover {
+  color: var(--gold);
+}
+
+.recovery-box {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.recovery-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.recovery-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.recovery-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.recovery-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 215, 0, 0.15);
+  color: var(--gold);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.recovery-btn:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.25);
+}
+
+.recovery-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Footer */
 .site-footer {
   margin-top: 50px;
