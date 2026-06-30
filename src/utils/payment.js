@@ -35,7 +35,7 @@ export async function startPayment({ onSuccess, onFailure }) {
       amount: order.amount,
       currency: order.currency,
       order_id: order.orderId,
-      name: "VoiceAura",
+      name: "VoiceAuras",
       description: "Unlock Full Voice Report",
       theme: { color: "#ffd700" },
       handler: async function (response) {

@@ -41,7 +41,7 @@ export default function App() {
     } catch (err) {
       console.error(err);
       setError(
-        "Microphone access is required for VoiceAura to analyze your voice. Please allow microphone access in your browser and try again."
+        "Microphone access is required for VoiceAuras to analyze your voice. Please allow microphone access in your browser and try again."
       );
     } finally {
       setRequesting(false);
@@ -109,7 +109,7 @@ export default function App() {
       <div className="container">
         <div className="badge">Real-Time Voice Analysis</div>
 
-        <h1 className="title">VoiceAura</h1>
+        <h1 className="title">VoiceAuras</h1>
 
         <p className="subtitle">
           Get real, measured insights into your voice — confidence, energy,
@@ -157,7 +157,7 @@ export default function App() {
         {/* Report */}
         {report && (
           <div className="report-card">
-            <h2>Your Professional VoiceAura Report</h2>
+            <h2>Your Professional VoiceAuras Report</h2>
             <p className="report-disclaimer">
               Based on real-time analysis of your 30-second voice recording.
             </p>
