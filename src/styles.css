@@ -36,47 +36,47 @@ body {
     radial-gradient(circle at bottom right, rgba(255, 215, 0, 0.06), transparent 25%);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .container {
   width: 100%;
   max-width: 1400px;
-  padding: 40px 24px;
+  padding: 28px 24px;
   text-align: center;
 }
 
 /* Badge */
 .badge {
   display: inline-block;
-  padding: 12px 30px;
+  padding: 10px 26px;
   border-radius: 30px;
   border: 1px solid rgba(255, 215, 0, 0.4);
   color: var(--gold);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 /* Title */
 .title {
-  font-size: clamp(40px, 7vw, 72px);
+  font-size: clamp(34px, 6vw, 60px);
   font-weight: 800;
   color: var(--gold);
   letter-spacing: -1px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   line-height: 1.05;
 }
 
 /* Subtitle - softened so it doesn't compete with the title */
 .subtitle {
-  font-size: clamp(16px, 2.2vw, 24px);
+  font-size: clamp(15px, 2vw, 21px);
   font-weight: 300;
   color: var(--text-muted);
   max-width: 950px;
   margin: auto;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 /* Stats */
@@ -84,7 +84,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 18px;
-  margin: 50px 0;
+  margin: 28px 0;
   flex-wrap: wrap;
 }
 
@@ -118,7 +118,7 @@ body {
 
 /* Mic Section */
 .mic-wrapper {
-  margin-top: 30px;
+  margin-top: 16px;
 }
 
 .mic-button {
@@ -173,7 +173,7 @@ body {
 }
 
 .subtitle-small {
-  margin-top: 20px;
+  margin-top: 12px;
   font-size: 18px;
   font-weight: 400;
   color: var(--text-muted);
@@ -289,6 +289,15 @@ body {
   margin-bottom: 22px;
 }
 
+.fun-insights-divider {
+  margin: 22px 0 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255, 215, 0, 0.3);
+  font-weight: 600;
+  color: var(--gold);
+  font-style: normal;
+}
+
 /* Mic permission / recording error state */
 .error-box {
   max-width: 500px;
@@ -301,6 +310,98 @@ body {
   font-size: 15px;
   line-height: 1.5;
   text-align: center;
+}
+
+/* Paywall - locked report preview */
+.locked-section {
+  position: relative;
+  margin-top: 4px;
+}
+
+.locked-blur {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.unlock-box {
+  margin-top: -90px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 26px 22px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(2, 6, 23, 0.96), rgba(3, 26, 61, 0.96));
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.12);
+}
+
+.unlock-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.unlock-subtitle {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--text-muted);
+  max-width: 420px;
+  margin: 0 auto 18px;
+  line-height: 1.5;
+}
+
+.unlock-btn {
+  padding: 14px 32px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.unlock-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.3);
+}
+
+.unlock-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.payment-error {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #ff9a9a;
+}
+
+/* Footer */
+.site-footer {
+  margin-top: 50px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  font-size: 13px;
+}
+
+.site-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+.footer-dot {
+  margin: 0 10px;
+  color: rgba(255, 255, 255, 0.25);
 }
 
 /* Mobile */

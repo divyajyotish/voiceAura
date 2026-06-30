@@ -155,7 +155,75 @@ export async function startVoiceAnalysis(durationSeconds, onTick) {
   return analyzeStream(stream, durationSeconds, onTick);
 }
 
-// Turns raw pitch/volume samples into the labelled report shown on screen.
+// ---------------------------------------------------------------------
+// "Fun Insights" layer - personality-style labels people enjoy reading.
+// These are NOT clinically validated traits. Voice alone cannot reliably
+// reveal someone's age, personality type, or relationship style - so
+// rather than inventing them at random, every label here is mapped from
+// the real measured metrics above (energy, steadiness, score) using a
+// fixed, documented rule. The UI shows these under a clear "for
+// entertainment / self-reflection" disclaimer so they're never presented
+// as a clinical or scientific assessment.
+// ---------------------------------------------------------------------
+
+function estimateVoiceAge(pitchProfile) {
+  if (pitchProfile === "Low Register") return "Mature Adult (35+)";
+  if (pitchProfile === "Mid Register") return "Adult (25–35)";
+  if (pitchProfile === "High Register") return "Young Adult (18–25)";
+  return "Not Detected";
+}
+
+function getPersonalityType(energyLevel, steadiness) {
+  if (energyLevel === "High" && steadiness === "Steady") return "The Charismatic Communicator";
+  if (energyLevel === "High") return "The Dynamic Performer";
+  if (energyLevel === "Medium" && steadiness === "Steady") return "The Confident Communicator";
+  if (energyLevel === "Medium") return "The Engaging Conversationalist";
+  if (steadiness === "Steady") return "The Calm Strategist";
+  return "The Thoughtful Listener";
+}
+
+function getLeadershipAura(score) {
+  if (score >= 85) return "Strong Influencer";
+  if (score >= 70) return "Emerging Leader";
+  return "Steady Contributor";
+}
+
+function getPersuasionPower(score, energyLevel) {
+  if (score >= 85 && energyLevel === "High") return "Elite";
+  if (score >= 70) return "Strong";
+  return "Developing";
+}
+
+function getStressLevel(steadiness, pauseRatio) {
+  if (steadiness === "Steady" && pauseRatio < 30) return "Calm & Stable";
+  if (steadiness === "Variable" || pauseRatio >= 45) return "Elevated Tension";
+  return "Mild Tension";
+}
+
+function getRelationshipStyle(tone) {
+  if (tone === "Calm & Composed") return "Emotionally Secure";
+  if (tone === "Energetic & Expressive") return "Expressive & Open";
+  if (tone === "Dynamic & Animated") return "Passionate & Direct";
+  return "Balanced & Adaptive";
+}
+
+function getCareerMatch(personalityType) {
+  const map = {
+    "The Charismatic Communicator": "Leadership, Sales, Consulting",
+    "The Dynamic Performer": "Media, Marketing, Public Speaking",
+    "The Confident Communicator": "Management, Business Development",
+    "The Engaging Conversationalist": "Customer Relations, Teaching",
+    "The Calm Strategist": "Strategy, Analysis, Operations",
+    "The Thoughtful Listener": "Counseling, Education, HR",
+  };
+  return map[personalityType] || "Communication-Focused Roles";
+}
+
+function getInsight(energyLevel, steadiness) {
+  return `Your voice shows ${energyLevel.toLowerCase()} energy with a ${steadiness.toLowerCase()} delivery style — these are the qualities people notice most about how you communicate.`;
+}
+
+
 // Every threshold below is a simple, fixed rule applied to real measured
 // values - documented here so it stays easy to tune later.
 function buildReport(pitchSamples, rmsSamples) {
@@ -232,5 +300,14 @@ function buildReport(pitchSamples, rmsSamples) {
     pauseRatio,
     steadiness,
     recommendation,
+    // Fun Insights - derived, not random; see disclaimer in the UI/PDF
+    estimatedVoiceAge: estimateVoiceAge(pitchProfile),
+    personalityType: getPersonalityType(energyLevel, steadiness),
+    leadershipAura: getLeadershipAura(score),
+    persuasionPower: getPersuasionPower(score, energyLevel),
+    stressLevel: getStressLevel(steadiness, pauseRatio),
+    relationshipStyle: getRelationshipStyle(tone),
+    careerMatch: getCareerMatch(getPersonalityType(energyLevel, steadiness)),
+    insight: getInsight(energyLevel, steadiness),
   };
 }

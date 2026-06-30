@@ -251,6 +251,20 @@ export default function App() {
             )}
           </div>
         )}
+
+        <footer className="site-footer">
+          <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">
+            Privacy Policy
+          </a>
+          <span className="footer-dot">•</span>
+          <a href="/terms.html" target="_blank" rel="noopener noreferrer">
+            Terms &amp; Conditions
+          </a>
+          <span className="footer-dot">•</span>
+          <a href="/refund-policy.html" target="_blank" rel="noopener noreferrer">
+            Refund Policy
+          </a>
+        </footer>
       </div>
     </div>
   );
