@@ -104,6 +104,34 @@ export function downloadVoiceAuraPDF(report) {
   fieldRow("Pause Ratio", `${report.pauseRatio}%`);
   y += 6;
 
+  // ---------- Section 3: Fun Insights ----------
+  // Clearly separated and labelled as entertainment/self-reflection,
+  // since these traits aren't a scientific reading of personality,
+  // age, or relationships - just a playful interpretation of the
+  // measured energy/steadiness/score above.
+  sectionTitle("Fun Insights");
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9);
+  doc.setTextColor(...textMuted);
+  doc.text("For entertainment and self-reflection purposes.", margin, y);
+  y += 8;
+
+  fieldRow("Estimated Voice Age", report.estimatedVoiceAge);
+  fieldRow("Personality Type", report.personalityType);
+  fieldRow("Leadership Aura", report.leadershipAura);
+  fieldRow("Persuasion Power", report.persuasionPower);
+  fieldRow("Stress Level", report.stressLevel);
+  fieldRow("Relationship Style", report.relationshipStyle);
+  fieldRow("Career Match", report.careerMatch);
+  y += 6;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
+  doc.setTextColor(...textDark);
+  const insightLines = doc.splitTextToSize(report.insight, contentWidth);
+  doc.text(insightLines, margin, y);
+  y += insightLines.length * 6 + 8;
+
   // ---------- AI Recommendation callout ----------
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10.5);
