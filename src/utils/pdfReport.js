@@ -1,19 +1,17 @@
 import jsPDF from "jspdf";
+import { translations } from "./reportTranslations";
 
 function generateReportId() {
-  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `VA-${rand}`;
+  return `VA-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 }
 
 function addPageIfNeeded(doc, y, needed = 30) {
-  if (y + needed > 272) {
-    doc.addPage();
-    return 20;
-  }
+  if (y + needed > 272) { doc.addPage(); return 20; }
   return y;
 }
 
-export function downloadVoiceAuraPDF(report) {
+export function downloadVoiceAuraPDF(report, lang = "en") {
+  const t = translations[lang] || translations.en;
   const doc = new jsPDF("p", "mm", "a4");
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 18;
@@ -27,47 +25,45 @@ export function downloadVoiceAuraPDF(report) {
   const textLight = [80, 80, 80];
 
   const reportId = generateReportId();
-  const dateStr = new Date().toLocaleDateString("en-IN", {
-    day: "2-digit", month: "short", year: "numeric",
-  });
+  const dateStr = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const pitchDisplay = report.avgPitch > 0 ? `${report.avgPitch} ${t.hz}` : t.notDetected;
+  const energyLabel = t.energyLevels[report.energyLevel] || report.energyLevel;
+  const steadyLabel = t.steadinessLevels[report.steadiness] || report.steadiness;
+  const stressLabel = t.stressLevels[report.stressLevel] || report.stressLevel;
+  const pitchLabel = t.pitchProfiles[report.pitchProfile] || report.pitchProfile;
 
-  const pitchDisplay = report.avgPitch > 0 ? `${report.avgPitch} Hz` : "Not Detected";
-
-  // ── Header band ──
+  // Header
   doc.setFillColor(...gold);
   doc.rect(0, 0, pageWidth, 42, "F");
   doc.setFillColor(...goldDark);
   doc.rect(0, 40, pageWidth, 1.5, "F");
-
   doc.setTextColor(...navy);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(26);
-  doc.text("VoiceAuras", margin, 18);
-
+  doc.text(t.brandName, margin, 18);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.text("Premium Deep Analysis Report", margin, 27);
-
-  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(t.reportTitle, margin, 27);
   doc.setFontSize(9);
-  doc.text(`Report ID: ${reportId}`, pageWidth - margin, 16, { align: "right" });
-  doc.text(`Date: ${dateStr}`, pageWidth - margin, 23, { align: "right" });
+  doc.text(`${t.reportId}: ${reportId}`, pageWidth - margin, 16, { align: "right" });
+  doc.text(`${t.date}: ${dateStr}`, pageWidth - margin, 23, { align: "right" });
 
   let y = 55;
 
-  // ── helpers ──
-  const sectionHeader = (num, title) => {
+  // Helpers
+  const sectionHeader = (title) => {
     y = addPageIfNeeded(doc, y, 20);
     doc.setFillColor(...gold);
     doc.rect(margin, y - 4, 3.5, 7, "F");
     doc.setTextColor(...navy);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.text(`${num}. ${title}`, margin + 6, y + 1);
-    y += 10;
+    doc.text(title, margin + 6, y + 1);
+    y += 11;
   };
 
   const subLabel = (label) => {
+    y = addPageIfNeeded(doc, y, 8);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10.5);
     doc.setTextColor(...goldDark);
@@ -76,16 +72,18 @@ export function downloadVoiceAuraPDF(report) {
   };
 
   const bodyText = (text, indent = 0) => {
+    if (!text) return;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10.5);
     doc.setTextColor(...textDark);
     const lines = doc.splitTextToSize(text, contentWidth - indent);
     y = addPageIfNeeded(doc, y, lines.length * 5.5 + 2);
     doc.text(lines, margin + indent, y);
-    y += lines.length * 5.5 + 2;
+    y += lines.length * 5.5 + 3;
   };
 
-  const bulletPoint = (text) => {
+  const bullet = (text) => {
+    if (!text) return;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10.5);
     doc.setTextColor(...textDark);
@@ -93,26 +91,10 @@ export function downloadVoiceAuraPDF(report) {
     y = addPageIfNeeded(doc, y, lines.length * 5.5 + 1);
     doc.text("•", margin + 2, y);
     doc.text(lines, margin + 8, y);
-    y += lines.length * 5.5 + 1;
-  };
-
-  const metricRow = (label, value) => {
-    y = addPageIfNeeded(doc, y, 10);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.5);
-    doc.setTextColor(...textLight);
-    doc.text(label, margin, y);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...goldDark);
-    doc.text(String(value), pageWidth - margin, y, { align: "right" });
-    y += 6;
-    doc.setDrawColor(230, 230, 230);
-    doc.line(margin, y - 2.5, pageWidth - margin, y - 2.5);
+    y += lines.length * 5.5 + 2;
   };
 
   const callout = (title, text) => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.5);
     const lines = doc.splitTextToSize(text, contentWidth - 14);
     const boxH = lines.length * 5.5 + 16;
     y = addPageIfNeeded(doc, y, boxH + 4);
@@ -135,425 +117,225 @@ export function downloadVoiceAuraPDF(report) {
     y = addPageIfNeeded(doc, y, 6);
     doc.setDrawColor(220, 220, 220);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 5;
+    y += 6;
   };
 
-  const gap = (n = 6) => { y += n; };
+  const bigLabel = (text) => {
+    y = addPageIfNeeded(doc, y, 10);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(...goldDark);
+    doc.text(text, margin, y);
+    y += 8;
+  };
 
-  // ═══════════════════════════════════════
-  // 1. Voice Identity Overview
-  // ═══════════════════════════════════════
-  sectionHeader(1, "Voice Identity Overview");
-  bodyText("Your voice reflects a natural sense of confidence and conversational influence. This report reveals that your speaking style is not just about words — your voice creates emotional, social, and psychological impressions on the people around you.");
-  gap(2);
-  bodyText("Your vocal profile suggests someone who can leave an impact in conversations, hold attention, and communicate thoughts with clarity.");
-  gap(6);
-  divider();
+  const gap = (n = 5) => { y += n; };
 
-  // ═══════════════════════════════════════
-  // 2. Vocal Confidence Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(2, `Vocal Confidence Analysis (${report.score}%)`);
+  // ─── 1. Voice Identity ───
+  sectionHeader(t.s1Title);
+  bodyText(t.s1Body1);
+  bodyText(t.s1Body2);
+  gap(); divider();
 
-  const confDesc = report.score >= 85
-    ? `A ${report.score}% Vocal Confidence Score indicates exceptional vocal presence — your voice projects authority and trust with strong, consistent delivery.`
-    : report.score >= 70
-    ? `A ${report.score}% Vocal Confidence Score indicates that your voice carries noticeable confidence, with room for refinement and stronger control.`
-    : `A ${report.score}% Vocal Confidence Score shows a developing vocal foundation with good potential for growth through focused practice.`;
-  bodyText(confDesc);
+  // ─── 2. Confidence ───
+  sectionHeader(`${t.s2Title} (${report.score}%)`);
+  const confFn = report.score >= 85 ? t.s2High : report.score >= 70 ? t.s2Mid : t.s2Low;
+  bodyText(confFn(report.score));
   gap(3);
-
-  subLabel("Deep Insight:");
-  bulletPoint("Your speech delivery feels natural and believable.");
-  bulletPoint("You show low hesitation while speaking.");
-  bulletPoint("Listeners are likely to trust your words.");
-  if (report.score < 85) bulletPoint("There are moments where confidence slightly fluctuates.");
+  subLabel(t.s2DeepInsight);
+  bullet(t.s2B1); bullet(t.s2B2); bullet(t.s2B3);
+  if (report.score < 85) bullet(t.s2B4);
   gap(2);
-
-  subLabel("Impact on Listener:");
-  bodyText("Your voice creates authority and trust.", 4);
+  subLabel(t.s2Impact); bodyText(t.s2ImpactBody, 4);
   gap(2);
+  subLabel(t.s2Tip);
+  bullet(t.s2T1); bullet(t.s2T2); bullet(t.s2T3);
+  gap(); divider();
 
-  subLabel("Improvement Tip:");
-  bulletPoint("Make your sentence endings stronger.");
-  bulletPoint("Reduce filler words.");
-  bulletPoint("Practice reading aloud daily.");
-  gap(6);
-  divider();
-
-  // ═══════════════════════════════════════
-  // 3. Voice Energy Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(3, "Voice Energy Analysis");
-  bodyText(`Your Voice Energy is at a ${report.energyLevel} level.`);
+  // ─── 3. Voice Energy ───
+  sectionHeader(t.s3Title);
+  bodyText(t.s3Intro(energyLabel));
   gap(3);
+  subLabel(t.s3Means);
+  const energyBullets = report.energyLevel === "High" ? t.s3High : report.energyLevel === "Medium" ? t.s3Mid : t.s3Low;
+  energyBullets.forEach(b => bullet(b));
+  gap(2);
+  subLabel(t.s3PsyEffect);
+  const psyText = report.energyLevel === "High" ? t.s3PsyHigh : report.energyLevel === "Medium" ? t.s3PsyMid : t.s3PsyLow;
+  bodyText(psyText, 4);
+  gap(2);
+  subLabel(t.s3Tip);
+  const tipText = report.energyLevel === "High" ? t.s3TipHigh : report.energyLevel === "Medium" ? t.s3TipMid : t.s3TipLow;
+  bodyText(tipText, 4);
+  gap(); divider();
 
-  subLabel("This means:");
-  if (report.energyLevel === "High") {
-    bulletPoint("You are an energetic and assertive speaker.");
-    bulletPoint("Your energy commands attention and presence.");
-    bulletPoint("You project enthusiasm and confidence naturally.");
+  // ─── 4. Vocal Tone ───
+  sectionHeader(`${t.s4Title} (${report.tone})`);
+  bodyText(t.s4Body);
+  gap(3);
+  subLabel(t.s4Means);
+  bullet(t.s4B1); bullet(t.s4B2); bullet(t.s4B3);
+  gap(2);
+  subLabel(t.s4Social); bodyText(t.s4SocialBody, 4);
+  gap(); divider();
+
+  // ─── 5. Pitch Profile ───
+  sectionHeader(`${t.s5Title} — ${pitchLabel} (${pitchDisplay})`);
+  subLabel(t.s5WhatItSays);
+  const pitchBullets = report.pitchProfile === "Low Register" ? t.s5Low : report.pitchProfile === "High Register" ? t.s5High : t.s5Mid;
+  pitchBullets.forEach(b => bullet(b));
+  gap(2);
+  subLabel(t.s5Advantage);
+  const advText = report.pitchProfile === "Low Register" ? t.s5AdvLow : report.pitchProfile === "High Register" ? t.s5AdvHigh : t.s5AdvMid;
+  bodyText(advText, 4);
+  if (report.pitchProfile !== "Mid Register") {
     gap(2);
-    subLabel("Psychological Effect:");
-    bodyText("This kind of voice motivates and energizes people around you.", 4);
-    gap(2);
-    subLabel("Tip:");
-    bodyText("Balance your energy with strategic pauses to let key points land.", 4);
-  } else if (report.energyLevel === "Medium") {
-    bulletPoint("You are a calm yet expressive speaker.");
-    bulletPoint("Your energy feels balanced and stable.");
-    bulletPoint("You do not sound overly aggressive or too passive.");
-    gap(2);
-    subLabel("Psychological Effect:");
-    bodyText("This kind of voice makes people feel comfortable and open around you.", 4);
-    gap(2);
-    subLabel("Upgrade Suggestion:");
-    bodyText("Add stronger emphasis to important words.", 4);
-  } else {
-    bulletPoint("Your speaking energy is measured and thoughtful.");
-    bulletPoint("You come across as calm, composed, and deliberate.");
-    bulletPoint("Listeners perceive you as a careful, focused communicator.");
-    gap(2);
-    subLabel("Psychological Effect:");
-    bodyText("Your quiet confidence can feel authoritative in intimate settings.", 4);
-    gap(2);
-    subLabel("Tip:");
-    bodyText("Project your voice slightly more to fill larger spaces confidently.", 4);
+    subLabel(t.s5Improve);
+    const impText = report.pitchProfile === "Low Register" ? t.s5ImpLow : t.s5ImpHigh;
+    bodyText(impText, 4);
   }
-  gap(6);
-  divider();
+  gap(); divider();
 
-  // ═══════════════════════════════════════
-  // 4. Vocal Tone Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(4, `Vocal Tone Analysis (${report.tone})`);
-  bodyText("Your voice contains natural variation, making your speech more engaging and lively.");
+  // ─── 6. Pitch Steadiness ───
+  sectionHeader(`${t.s6Title} (${steadyLabel})`);
+  const steadyIntro = report.steadiness === "Steady" ? t.s6Steady : report.steadiness === "Moderate" ? t.s6Moderate : t.s6Variable;
+  bodyText(steadyIntro);
   gap(3);
-
-  subLabel("This Means:");
-  bulletPoint("You are emotionally expressive.");
-  bulletPoint("You likely have strong storytelling ability.");
-  bulletPoint("People can connect with your words quickly.");
+  subLabel(t.s6Interp);
+  const steadyBullets = report.steadiness === "Steady" ? t.s6SteadyB : report.steadiness === "Moderate" ? t.s6ModB : t.s6VarB;
+  steadyBullets.forEach(b => bullet(b));
+  if (report.steadiness === "Variable") {
+    gap(2); subLabel(t.s6Hidden); bodyText(t.s6HiddenBody, 4);
+  }
   gap(2);
+  subLabel(t.s6Rec);
+  bodyText(report.steadiness === "Steady" ? t.s6RecSteady : t.s6RecOther, 4);
+  gap(); divider();
 
-  subLabel("Social Impression:");
-  bodyText("You come across as approachable, energetic, and engaging.", 4);
-  gap(6);
-  divider();
-
-  // ═══════════════════════════════════════
-  // 5. Pitch Profile Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(5, `Pitch Profile Analysis — ${report.pitchProfile} (${pitchDisplay})`);
-
-  if (report.pitchProfile === "Low Register") {
-    subLabel("What It Says:");
-    bulletPoint("Lower voices are often associated with authority and maturity.");
-    bulletPoint("People may perceive you as grounded and confident.");
-    bulletPoint("Your vocal presence feels stronger.");
-    gap(2);
-    subLabel("Advantage:");
-    bodyText("A lower pitch often enhances leadership perception.", 4);
-    gap(2);
-    subLabel("Improvement:");
-    bodyText("Increasing pitch flexibility can strengthen emotional impact even more.", 4);
-  } else if (report.pitchProfile === "Mid Register") {
-    subLabel("What It Says:");
-    bulletPoint("Mid-range voices are highly versatile and universally clear.");
-    bulletPoint("People find your voice easy to follow and pleasant to listen to.");
-    bulletPoint("You can easily shift between formal and conversational tones.");
-    gap(2);
-    subLabel("Advantage:");
-    bodyText("Versatility — your voice works equally well in meetings, presentations, and casual conversation.", 4);
-  } else {
-    subLabel("What It Says:");
-    bulletPoint("Higher-register voices often convey energy and enthusiasm.");
-    bulletPoint("Your vocal presence feels dynamic and expressive.");
-    bulletPoint("Listeners perceive you as passionate and emotionally engaged.");
-    gap(2);
-    subLabel("Improvement:");
-    bodyText("Practicing deeper breath support can give your voice more grounded resonance.", 4);
-  }
-  gap(6);
-  divider();
-
-  // ═══════════════════════════════════════
-  // 6. Pitch Steadiness Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(6, `Pitch Steadiness Analysis (${report.steadiness})`);
-
-  if (report.steadiness === "Steady") {
-    bodyText("Your pitch stayed remarkably consistent throughout the recording.");
-    gap(3);
-    subLabel("Interpretation:");
-    bulletPoint("You demonstrate strong vocal control.");
-    bulletPoint("Your delivery comes across as calm, confident, and professional.");
-    bulletPoint("Listeners perceive you as prepared and composed.");
-    gap(2);
-    subLabel("Recommendation:");
-    bodyText("Maintain this consistency while adding intentional variation at key moments for extra impact.", 4);
-  } else if (report.steadiness === "Moderate") {
-    bodyText("Your pitch shows moderate variation — naturally expressive without being erratic.");
-    gap(3);
-    subLabel("Interpretation:");
-    bulletPoint("You do not sound robotic or overly controlled.");
-    bulletPoint("Your emotional expression feels natural.");
-    bulletPoint("Minor inconsistencies can be smoothed with focused practice.");
-    gap(2);
-    subLabel("Recommendation:");
-    bodyText("Improve breath control for better vocal consistency.", 4);
-  } else {
-    bodyText("Your pitch movement is flexible and dynamic throughout the recording.");
-    gap(3);
-    subLabel("Interpretation:");
-    bulletPoint("You do not sound robotic or overly controlled.");
-    bulletPoint("Your emotional expression feels natural.");
-    subLabel("Hidden Meaning:");
-    bodyText("At times, inconsistency may suggest nervousness or tension.", 4);
-    gap(2);
-    subLabel("Recommendation:");
-    bodyText("Improve breath control for better vocal consistency.", 4);
-  }
-  gap(6);
-  divider();
-
-  // ═══════════════════════════════════════
-  // 7. Pause Pattern Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(7, `Pause Pattern Analysis (${report.pauseRatio}%)`);
-
-  const pauseDesc = report.pauseRatio < 25
-    ? "Your pause usage appears balanced and efficient."
-    : report.pauseRatio < 40
-    ? "Your pause usage is slightly above ideal — pauses are present but manageable."
-    : "Your recording shows a higher pause ratio — indicating thoughtful but sometimes slow delivery.";
-  bodyText(pauseDesc);
+  // ─── 7. Pause Pattern ───
+  sectionHeader(`${t.s7Title} (${report.pauseRatio}%)`);
+  const pauseIntro = report.pauseRatio < 25 ? t.s7Low : report.pauseRatio < 40 ? t.s7Mid : t.s7High;
+  bodyText(pauseIntro);
   gap(3);
-
-  subLabel("What It Means:");
-  bulletPoint("You think before speaking.");
-  bulletPoint("Your speech processing feels clear and structured.");
+  subLabel(t.s7Means);
+  bullet(t.s7B1); bullet(t.s7B2);
   gap(2);
-  subLabel("Positive:");
-  bodyText("Pauses add power and clarity to your communication.", 4);
+  subLabel(t.s7Positive); bodyText(t.s7PosBody, 4);
   gap(2);
-  subLabel("Risk:");
-  bodyText("Too many pauses may reduce perceived confidence.", 4);
-  gap(6);
-  divider();
+  subLabel(t.s7Risk); bodyText(t.s7RiskBody, 4);
+  gap(); divider();
 
-  // ═══════════════════════════════════════
-  // Fun Insights header page break buffer
-  // ═══════════════════════════════════════
-  y = addPageIfNeeded(doc, y, 40);
+  // ─── Fun Insights Banner ───
+  y = addPageIfNeeded(doc, y, 30);
   doc.setFillColor(255, 248, 220);
   doc.roundedRect(margin, y, contentWidth, 22, 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...navy);
-  doc.text("Fun Insights — For Entertainment & Self-Reflection", pageWidth / 2, y + 8, { align: "center" });
+  doc.text(t.funInsightsHeader, pageWidth / 2, y + 8, { align: "center" });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
+  doc.setFontSize(9);
   doc.setTextColor(...textMuted);
-  const fiDisclaimer = "Designed for self-awareness & reflection — not as an absolute truth.";
-  doc.text(fiDisclaimer, pageWidth / 2, y + 15, { align: "center" });
+  doc.text(t.funInsightsDisclaimer, pageWidth / 2, y + 15, { align: "center" });
   y += 28;
 
-  // ═══════════════════════════════════════
-  // 8. Personality Blueprint
-  // ═══════════════════════════════════════
-  sectionHeader(8, "Personality Blueprint");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...goldDark);
-  doc.text(report.personalityType, margin, y);
-  y += 8;
-
-  bodyText("Your communication style suggests that:");
-  bulletPoint("You naturally connect well with people.");
-  bulletPoint("You have strong social adaptability.");
-  bulletPoint("Emotional intelligence is present in your interactions.");
+  // ─── 8. Personality ───
+  sectionHeader(t.s8Title);
+  bigLabel(report.personalityType);
+  bodyText(t.s8Intro);
+  bullet(t.s8B1); bullet(t.s8B2); bullet(t.s8B3);
   gap(2);
-  subLabel("Core Strength:");
-  bodyText("Building genuine connections.", 4);
+  subLabel(t.s8Strength); bodyText(t.s8StrBody, 4);
   gap(2);
-  subLabel("Growth Area:");
-  bodyText("A tendency to over-explain at times.", 4);
-  gap(6);
-  divider();
+  subLabel(t.s8Weak); bodyText(t.s8WeakBody, 4);
+  gap(); divider();
 
-  // ═══════════════════════════════════════
-  // 9. Leadership Aura Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(9, "Leadership Aura Analysis");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...goldDark);
-  doc.text(report.leadershipAura, margin, y);
-  y += 8;
-
-  bodyText("Your voice shows leadership potential with a strong communication foundation.");
+  // ─── 9. Leadership ───
+  sectionHeader(t.s9Title);
+  bigLabel(report.leadershipAura);
+  bodyText(t.s9Body);
   gap(3);
-  subLabel("Indicators:");
-  bulletPoint("Strong vocal foundation");
-  bulletPoint("Ability to hold listener attention");
-  bulletPoint("Emotional influence in communication");
+  subLabel(t.s9Indicators);
+  bullet(t.s9B1); bullet(t.s9B2); bullet(t.s9B3);
   gap(2);
-  subLabel("Growth Path:");
-  bodyText("Build stronger decision-making confidence.", 4);
-  gap(6);
-  divider();
+  subLabel(t.s9Growth); bodyText(t.s9GrowthBody, 4);
+  gap(); divider();
 
-  // ═══════════════════════════════════════
-  // 10. Persuasion Power Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(10, "Persuasion Power Analysis");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...goldDark);
-  doc.text(report.persuasionPower, margin, y);
-  y += 8;
+  // ─── 10. Persuasion ───
+  sectionHeader(t.s10Title);
+  bigLabel(report.persuasionPower);
+  bodyText(t.s10Body);
+  bullet(t.s10B1); bullet(t.s10B2); bullet(t.s10B3);
+  gap(2); bodyText(t.s10Conclusion, 4);
+  gap(); divider();
 
-  bodyText("Your voice has strong persuasive qualities. This suggests high potential in:");
-  bulletPoint("Sales & Negotiation");
-  bulletPoint("Public speaking");
-  bulletPoint("Teaching & Mentoring");
-  gap(2);
-  bodyText("Your speaking style helps influence and guide others effectively.", 4);
-  gap(6);
-  divider();
-
-  // ═══════════════════════════════════════
-  // 11. Stress Detection Analysis
-  // ═══════════════════════════════════════
-  sectionHeader(11, "Stress Detection Analysis");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...goldDark);
-  doc.text(report.stressLevel, margin, y);
-  y += 8;
-
+  // ─── 11. Stress ───
+  sectionHeader(t.s11Title);
+  bigLabel(stressLabel);
   if (report.stressLevel === "Calm & Stable") {
-    bodyText("No significant tension markers were detected in your voice — you sound relaxed and in control.");
-    gap(2);
-    subLabel("Advice:");
-    bodyText("Maintain this composure. Before important conversations, take a few slow, deep breaths.", 4);
+    bodyText(t.s11Calm);
+    gap(2); subLabel(t.s11Advice); bodyText(t.s11CalmAdv, 4);
   } else {
-    bodyText("Some subtle tension markers were detected in your voice.");
-    gap(2);
-    subLabel("Possible reasons:");
-    bulletPoint("Internal pressure");
-    bulletPoint("Overthinking");
-    bulletPoint("Performance stress");
-    gap(2);
-    subLabel("Advice:");
-    bulletPoint("Deep breathing exercises before speaking");
-    bulletPoint("Slower speech pacing");
-    bulletPoint("Staying hydrated");
+    bodyText(t.s11Elevated);
+    gap(2); subLabel(t.s11Reasons);
+    bullet(t.s11R1); bullet(t.s11R2); bullet(t.s11R3);
+    gap(2); subLabel(t.s11Advice);
+    bullet(t.s11A1); bullet(t.s11A2); bullet(t.s11A3);
   }
-  gap(6);
-  divider();
+  gap(); divider();
 
-  // ═══════════════════════════════════════
-  // 12. Relationship Communication Style
-  // ═══════════════════════════════════════
-  sectionHeader(12, "Relationship Communication Style");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...goldDark);
-  doc.text(report.relationshipStyle, margin, y);
-  y += 8;
-
-  bodyText("In relationships, your communication style appears:");
-  bulletPoint("Honest and direct");
-  bulletPoint("Expressive and emotionally present");
-  bulletPoint("Capable of building deep connections");
+  // ─── 12. Relationship ───
+  sectionHeader(t.s12Title);
+  bigLabel(report.relationshipStyle);
+  bodyText(t.s12Body);
+  bullet(t.s12B1); bullet(t.s12B2); bullet(t.s12B3);
   gap(2);
-  subLabel("Strength:");
-  bodyText("Clear and direct communication.", 4);
+  subLabel(t.s12Strength); bodyText(t.s12StrBody, 4);
   gap(2);
-  subLabel("Risk:");
-  bodyText("Your intensity may sometimes feel overwhelming to others.", 4);
-  gap(6);
-  divider();
+  subLabel(t.s12Risk); bodyText(t.s12RiskBody, 4);
+  gap(); divider();
 
-  // ═══════════════════════════════════════
-  // 13. Career Alignment
-  // ═══════════════════════════════════════
-  sectionHeader(13, "Career Alignment");
-  bodyText("Best matched career fields based on your vocal profile:");
+  // ─── 13. Career ───
+  sectionHeader(t.s13Title);
+  bodyText(t.s13Intro);
   gap(3);
-
   const careers = report.careerMatch.split(",");
-  careers.forEach(c => bulletPoint(c.trim()));
+  careers.forEach(c => bullet(`✔ ${c.trim()}`));
+  gap(2);
+  subLabel(t.s13Why); bodyText(t.s13WhyBody, 4);
+  gap(); divider();
+
+  // ─── 14. Hidden Strengths ───
+  sectionHeader(t.s14Title);
+  bodyText(t.s14Intro);
   gap(3);
-  subLabel("Why:");
-  bodyText("Your vocal profile creates trust, engagement, and attention retention — essential qualities for these fields.", 4);
-  gap(6);
-  divider();
+  bullet(t.s14B1); bullet(t.s14B2); bullet(t.s14B3);
+  bullet(t.s14B4); bullet(t.s14B5);
+  gap(); divider();
 
-  // ═══════════════════════════════════════
-  // 14. Hidden Voice Strengths
-  // ═══════════════════════════════════════
-  sectionHeader(14, "Hidden Voice Strengths");
-  bodyText("Your voice carries several hidden strengths:");
-  gap(3);
-  bulletPoint("Natural trust-building ability");
-  bulletPoint("Emotional engagement");
-  bulletPoint("Leadership potential");
-  bulletPoint("Strong conversational flow");
-  bulletPoint("Listener retention power");
-  gap(6);
-  divider();
+  // ─── 15. Growth Plan ───
+  sectionHeader(t.s15Title);
+  subLabel(t.s15D1); bullet(t.s15D1B1); bullet(t.s15D1B2); gap(3);
+  subLabel(t.s15D2); bullet(t.s15D2B1); bullet(t.s15D2B2); gap(3);
+  subLabel(t.s15D3); bullet(t.s15D3B1); bullet(t.s15D3B2); gap(3);
+  subLabel(t.s15D4); bullet(t.s15D4B1); bullet(t.s15D4B2);
+  gap(); divider();
 
-  // ═══════════════════════════════════════
-  // 15. Your Voice Growth Plan (30 days)
-  // ═══════════════════════════════════════
-  sectionHeader(15, "Your Voice Growth Plan");
-
-  subLabel("Days 1–7:");
-  bulletPoint("Read aloud for 10 minutes daily");
-  bulletPoint("Practice breath control for 5 minutes");
-  gap(3);
-
-  subLabel("Days 8–14:");
-  bulletPoint("Record and review your speech");
-  bulletPoint("Reduce filler words");
-  gap(3);
-
-  subLabel("Days 15–21:");
-  bulletPoint("Practice emotional range");
-  bulletPoint("Improve pitch variation");
-  gap(3);
-
-  subLabel("Days 22–30:");
-  bulletPoint("Storytelling practice");
-  bulletPoint("Public speaking simulation");
-  gap(6);
-
-  // ═══════════════════════════════════════
-  // Action Tips
-  // ═══════════════════════════════════════
+  // ─── Action Tips ───
   if (report.actionTips && report.actionTips.length > 0) {
-    divider();
-    sectionHeader("", "Your Personalised Action Tips");
-    report.actionTips.forEach(tip => bulletPoint(tip));
-    gap(6);
+    sectionHeader(t.actionTipsTitle);
+    report.actionTips.forEach(tip => bullet(tip));
+    gap(); divider();
   }
 
-  // ═══════════════════════════════════════
-  // Final AI Summary callout
-  // ═══════════════════════════════════════
-  divider();
-  y = addPageIfNeeded(doc, y, 40);
+  // ─── Final Summary ───
+  const rating = Math.min(10, (report.score / 10)).toFixed(1);
   callout(
-    "Final AI Summary",
-    `Your voice has a strong communication foundation. You are naturally engaging and capable of leaving a lasting impression on others. By improving pitch control, energy placement, and pause mastery, your voice can become more professional, persuasive, and leadership-grade.\n\nVoice Potential Rating: ${Math.min(10, (report.score / 10)).toFixed(1)} / 10`
+    t.finalSummaryTitle,
+    `${t.finalSummaryBody}\n\n${t.voicePotential}: ${rating} / 10`
   );
 
-  // ═══════════════════════════════════════
-  // Footer on every page
-  // ═══════════════════════════════════════
+  // ─── Footer on every page ───
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
@@ -563,15 +345,12 @@ export function downloadVoiceAuraPDF(report) {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
     doc.setTextColor(...textMuted);
-    doc.text(
-      "This report reflects acoustic patterns from a single 30-second recording. For entertainment & self-reflection purposes.",
-      margin,
-      footerY
-    );
+    doc.text(t.footer, margin, footerY);
     doc.setFont("helvetica", "normal");
-    doc.text(`${reportId}`, pageWidth - margin - 20, footerY);
-    doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, footerY, { align: "center" });
+    doc.text(`${t.page} ${i} ${t.of} ${totalPages}`, pageWidth / 2, footerY, { align: "center" });
+    doc.text(reportId, pageWidth - margin, footerY, { align: "right" });
   }
 
-  doc.save("VoiceAuras-Premium-Report.pdf");
+  const langNames = { en: "English", hi: "Hindi", gu: "Gujarati" };
+  doc.save(`VoiceAuras-Premium-Report-${langNames[lang] || "Report"}.pdf`);
 }

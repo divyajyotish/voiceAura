@@ -272,6 +272,10 @@ export default function App() {
                 </div>
 
                 <div className="report-item">
+                  Vocal Variety: <span>{report.vocalVariety}</span>
+                </div>
+
+                <div className="report-item">
                   Pause Ratio: <span>{report.pauseRatio}%</span>
                 </div>
 
@@ -280,8 +284,14 @@ export default function App() {
                 </div>
 
                 <p className="report-disclaimer fun-insights-divider">
-                  Fun Insights — for entertainment &amp; self-reflection
+                  Your Action Tips
                 </p>
+
+                <ul className="action-tips-list">
+                  {report.actionTips.map((tip, i) => (
+                    <li key={i}>{tip}</li>
+                  ))}
+                </ul>
 
                 <div className="report-item">
                   Estimated Voice Age: <span>{report.estimatedVoiceAge}</span>
@@ -315,9 +325,20 @@ export default function App() {
                   Insight: <span>{report.insight}</span>
                 </div>
 
-                <button className="download-btn" onClick={downloadPDF}>
-                  Download Professional Report (PDF)
-                </button>
+                <div className="download-lang-section">
+                  <p className="download-lang-label">Download Report in your language:</p>
+                  <div className="download-lang-buttons">
+                    <button className="download-btn lang-btn" onClick={() => downloadVoiceAuraPDF(report, "en")}>
+                      🇬🇧 English
+                    </button>
+                    <button className="download-btn lang-btn" onClick={() => downloadVoiceAuraPDF(report, "hi")}>
+                      🇮🇳 हिन्दी
+                    </button>
+                    <button className="download-btn lang-btn" onClick={() => downloadVoiceAuraPDF(report, "gu")}>
+                      🏵️ ગુજરાતી
+                    </button>
+                  </div>
+                </div>
               </>
             )}
           </div>
